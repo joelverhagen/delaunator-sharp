@@ -451,7 +451,11 @@ namespace DelaunatorSharp
                     var temp = ids[i];
                     var tempDist = dists[temp];
                     var j = i - 1;
-                    while (j >= left && dists[ids[j]] > tempDist) ids[j + 1] = ids[j--];
+                    while (j >= left && dists[ids[j]] > tempDist)
+                    {
+                        ids[j + 1] = ids[j];
+                        j--;
+                    }
                     ids[j + 1] = temp;
                 }
             }
