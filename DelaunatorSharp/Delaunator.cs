@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace DelaunatorSharp
 {
@@ -302,8 +301,13 @@ namespace DelaunatorSharp
             hullPrev = hullNext = hullTri = null; // get rid of temporary arrays
 
             //// trim typed triangle mesh arrays
-            Triangles = Triangles.Take(trianglesLen).ToArray();
-            Halfedges = Halfedges.Take(trianglesLen).ToArray();
+            var trimmedTriangles = new int[trianglesLen];
+            Array.Copy(Triangles, trimmedTriangles, trianglesLen);
+            Triangles = trimmedTriangles;
+
+            var trimmedHalfedges = new int[trianglesLen];
+            Array.Copy(Halfedges, trimmedHalfedges, trianglesLen);
+            Halfedges = trimmedHalfedges;
         }
 
         #region CreationLogic
@@ -623,8 +627,34 @@ namespace DelaunatorSharp
             return points.ToArray();
         }
 
-        public IEnumerable<IEdge> GetEdgesOfTriangle(int t) => CreateHull(EdgesOfTriangle(t).Select(p => Points[p]));
-        public static IEnumerable<IEdge> CreateHull(IEnumerable<IPoint> points) => points.Zip(points.Skip(1).Append(points.FirstOrDefault()), (a, b) => new Edge(0, a, b)).OfType<IEdge>();
+        public IEdge[] GetEdgesOfTriangle(int t)
+        {
+            var edges = EdgesOfTriangle(t);
+            var points = new IPoint[edges.Length];
+            for (var i = 0; i < edges.Length; i++)
+            {
+                points[i] = Points[edges[i]];
+            }
+
+            return CreateHull(points);
+        }
+
+        public static IEdge[] CreateHull(IReadOnlyList<IPoint> points)
+        {
+            var edges = new IEdge[points.Count];
+            for (var i = 1; i < points.Count; i++)
+            {
+                edges[i - 1] = new Edge(0, points[i - 1], points[i]);
+            }
+
+            if (points.Count >= 2)
+            {
+                edges[points.Count - 1] = new Edge(0, points[points.Count - 1], points[0]);
+            }
+
+            return edges;
+        }
+
         public IPoint GetTriangleCircumcenter(int t)
         {
             var vertices = GetTrianglePoints(t);
